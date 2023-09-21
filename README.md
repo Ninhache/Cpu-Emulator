@@ -31,3 +31,11 @@ J'ai entendu dire que cela serait en décembre, donc je m'arrangerai pour que ce
 ## Amusons-nous !
 
 J'en ai marre d'écrire dans un .md, je vais écrire dans des fichiers .rs maintenant !
+
+## Usefull Links
+
+> Imil Heitor's youtube channel, not the most usefull link but the guy is explaining really nice things about low level concepts
+https://www.youtube.com/channel/UCqGZmYTiWmOl7vXb0XBbY_Q
+
+> Little explanations about ALU Instructions
+https://faculty.kfupm.edu.sa/coe/mudawar/coe233/lectures/07-ALU-Instructions.pdf
