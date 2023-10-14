@@ -22,7 +22,7 @@
 //! The affected flags and how they are affected.
 pub mod instructions {
 
-    // May gonna leave
+    // May gonna be removed
     enum Operand {
         Register(u8),               //   Rn
         IndirectRegister(u8),       //  (Rn)
