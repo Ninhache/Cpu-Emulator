@@ -1,7 +1,21 @@
-## Second prototype
+## Fourth prototype.. that quite long
 
 ## Objectives
-- Parser ASM -> Machine code
-- May write some doc could be usefull later
 
-## The design is pretty poor, it clearly needs to be re-think ... (BUT ! It's working :D)
+Re-use the opcode (in the last version they got removed for no reason)
+
+the final version need to have something similar to this :
+
+```
+         |         assembler           |             |        CPU       |
+asm file > parse asm > gen binary file > binary file > decode > execute
+```
+
+The last version where like this :
+
+```
+        |        CPU                   |
+asm file > parse asm > decode > execute
+```
+
+I've abstract too much layers, i've to restart again ahaha
