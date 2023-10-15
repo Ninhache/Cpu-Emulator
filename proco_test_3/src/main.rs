@@ -188,7 +188,7 @@ fn parse_operand(operand_str: &str) -> Result<Operand, String> {
     } else
     
     if operand_str.starts_with("@0x") {
-        u8::from_str_radix(&operand_str[3..], 8)
+        u8::from_str_radix(&operand_str[3..], 16)
             .map(Operand::MemoryAddress)
             .map_err(|_| "Invalid address".to_string())
     } else
