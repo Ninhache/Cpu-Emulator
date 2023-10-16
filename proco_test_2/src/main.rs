@@ -49,7 +49,7 @@ fn main() -> Result<(),  Box<dyn Error>> {
     //     println!("Opcode: {:?}, Function: {:?}", opcode, function);
     // }    
     
-    let regex: Regex = Regex::new(r"[A-Z]+\s").unwrap();
+    // let regex: Regex = Regex::new(r"[A-Z]+\s").unwrap();
 
     println!("Take an input asm..");
     
@@ -337,7 +337,6 @@ fn get_op_value(opcode: &str, optype: OpType) -> String {
             undefined_str
         },
         OpType::PreDecrementedRegister() => {
-            print!("GHJKLGHJKLGHJKLMGHJKLMHJKL [{}]", opcode);
             let re = &RE_MAP["REGISTER_I_PRE"].regex;
             
             if let Some(captures) = re.captures(opcode) {
@@ -443,6 +442,8 @@ fn parse_2op(parts: Vec<&str>) -> String {
 fn parse_move(parts: Vec<&str>) -> String {
     "null".to_owned()
 }
+
+
 
 
 fn get_instruction_code(part: &str) -> String {
