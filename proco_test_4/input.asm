@@ -1,6 +1,6 @@
 ADD R0, R1
 ADD (R0), R1 ; bon j'peux commenter aussi
-ADD (R0), (R1)
-ADD -(R0), #label
-ADD (R0), #b01011
+ADD (R1), R3
+ADD -(R3), R4
+ADD (R5), R8
 PUSH @0xFA
