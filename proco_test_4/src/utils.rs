@@ -1,7 +1,18 @@
+use core::fmt;
 use std::ops::Deref;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Copy)]
 pub struct BitInt<const N: usize>(u16);
+
+impl<const N: usize> fmt::Display for BitInt<N> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let value = self.0 & ((1 << N) - 1);
+
+        let binary_str = format!("{:0width$b}", value, width = N);
+
+        write!(f, "{}", binary_str)
+    }
+}
 
 impl<const N: usize> BitInt<N> {
     pub fn new(value: u16) -> Option<Self> {
@@ -24,9 +35,17 @@ impl<const N: usize> Deref for BitInt<N> {
     }
 }
 
+impl<const N: usize> PartialEq for BitInt<N> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
 
-
-
+impl<const N: usize> PartialOrd for BitInt<N> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
 
 
 use std::io::{self, Write};
