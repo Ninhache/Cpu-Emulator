@@ -4,6 +4,9 @@ extern crate regex;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 
+
+use std::io::prelude::*;
+
 mod parser;
 mod utils;
 
@@ -63,6 +66,7 @@ fn main() -> std::io::Result<()> {
     
     let reader = BufReader::new(file);
     let mut i = 0;
+
     for line in reader.lines() {
         
         let line = line?;
@@ -71,21 +75,16 @@ fn main() -> std::io::Result<()> {
 
         let tokens: Vec<&str> = parser::tokenize(&line);
 
-        // print!("{} -> ", tokens[0].to_string());
-        // print!("{} -> ", tokens[0].to_string());
 
         let instruction: Vec<parser::InstructionFormat> = parser::parse(tokens, &INSTRUCTION_SET).unwrap();
         
         instruction.iter()
             .for_each(|instr| {
-                println!("{}", instr.to_string())
+                println!("{}", instr.to_string());
             });
         
         i = i + 1;
-
     }
-
-    // println!("{}", .join("\n"));
 
     Ok(())
 }
