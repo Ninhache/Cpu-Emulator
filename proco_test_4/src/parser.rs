@@ -1,4 +1,4 @@
-use crate::utils::{BitInt, alert, log};
+use crate::utils::{BitInt, alert};
 
 use regex::{self, Regex};
 
@@ -7,25 +7,37 @@ pub enum InstructionFormat {
     Format0op(_Format0opLayout),
     Format1op(_Format1opLayout),
     Format2op(_Format2opLayout),
+    FormatMoveOp(_FormatMoveLayout)
 }
 
-struct _Format0opLayout {
+pub struct _Format0opLayout {
     opcode: BitInt::<5>,
     op_reserved: BitInt::<11>,
 }
 
-struct _Format1opLayout {
+pub struct _Format1opLayout {
     opcode: BitInt::<5>,
     op_type: BitInt::<3>,
     op_value: BitInt::<8>,
 }
 
-struct _Format2opLayout {
+pub struct _Format2opLayout {
     opcode: BitInt::<5>,
     registry_dest: BitInt::<3>,
     op_type_source: BitInt::<3>,
     op_value: BitInt::<5>,
 }
+
+pub struct _FormatMoveLayout {
+    opcode: BitInt::<5>,
+    h: BitInt::<1>,
+    l: BitInt::<1>,
+    source_type: BitInt::<3>,
+    destination_type: BitInt::<3>,
+    registry_no: BitInt::<3>,
+    value: BitInt::<16>,
+}
+
 
 impl fmt::Display for _Format0opLayout {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -45,12 +57,19 @@ impl fmt::Display for _Format2opLayout {
     }
 }
 
+impl fmt::Display for _FormatMoveLayout {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Opcode: {}, H: {}, L: {}, Source Type: {}, Destination Type: {}, Registry N: {}, Value {}", self.opcode, self.h, self.l, self.source_type, self.destination_type, self.registry_no, self.value)
+    }
+}
+
 impl fmt::Display for InstructionFormat {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InstructionFormat::Format0op(layout) => write!(f, "Format0op: {}", layout),
             InstructionFormat::Format1op(layout) => write!(f, "Format1op: {}", layout),
             InstructionFormat::Format2op(layout) => write!(f, "Format2op: {}", layout),
+            InstructionFormat::FormatMoveOp(layout) => write!(f, "FormatMoveOp: {}", layout),
         }
     }
 }
@@ -68,7 +87,9 @@ pub static ref RE_MAP: HashMap<&'static str, Regex> = [
     ("ADRESS_D", Regex::new(r"^@0x([0-9A-F]{1,4})$").unwrap()),
     ("REGISTER_I", Regex::new(r"^\(R([0-7])\)$").unwrap()),
     ("REGISTER_I_POST", Regex::new(r"^\(R([0-7])\)\+$").unwrap()),
-    ("REGISTER_I_PRE", Regex::new(r"^\-\(R([0-7])\)$").unwrap())
+    ("REGISTER_I_PRE", Regex::new(r"^\-\(R([0-7])\)$").unwrap()),
+
+    ("MOVE_PARSE", Regex::new(r"^MOVE.([\w])$").unwrap())
 ].iter().cloned().collect();
 }
 
@@ -126,13 +147,66 @@ pub fn parse(tokens: Vec<&str>, instruction_set: &HashMap<&str, BitInt<5>>) -> R
         },
         3 => {
             let instruction = tokens.get(0).unwrap();
-            if instruction.to_lowercase() == "MOVE" {
+            if instruction.to_uppercase().starts_with("MOVE") {
                 // todo: parse move instruction
-                instructions.push(InstructionFormat::Format2op(_Format2opLayout {
-                    opcode: BitInt::<5>::new(0b00000).unwrap(),
-                    registry_dest: BitInt::<3>::new(0).unwrap(),
-                    op_type_source: BitInt::<3>::new(0).unwrap(),
-                    op_value: BitInt::<5>::new(0).unwrap()
+
+                let re: &Regex = RE_MAP.get("MOVE_PARSE").unwrap();
+                
+                let mut h_value: BitInt<1> = BitInt::<1>::new(1).unwrap();
+                let mut l_value: BitInt<1> = BitInt::<1>::new(1).unwrap();
+
+                if let Some(captures) = re.captures(instruction) {
+                    if let Some(token_value) = captures.get(1) {
+                        match token_value.as_str() {
+                            "L" => {
+                                h_value = BitInt::<1>::new(0).unwrap()
+                            },
+                            "H" => {
+                                l_value = BitInt::<1>::new(0).unwrap()
+                            },
+                            _ => {
+                                println!("tu as trouvé un truc chelou là");
+                                panic!("tu as trouvé un truc chelou là")
+                            }
+                        };
+                    }
+                }
+
+                let source = tokens.get(1).unwrap();
+                let destination = tokens.get(2).unwrap();
+
+                let source_type: Operand = parse_operand_type(source);
+                let destination_type: Operand = parse_operand_type(destination);
+
+                let registry_no;
+                let value;
+                match source_type {
+                    Operand::ImmediateValueBIN(_) |
+                    Operand::ImmediateValueDEC(_) |
+                    Operand::ImmediateValueHEX(_) |
+                    Operand::MemoryAddress(_) => {
+                        let source_value  = get_op_value(source, source_type);
+                        let destination_value  = get_op_value(destination, destination_type);
+                        registry_no = destination_value;
+                        value = source_value;
+                    },
+                    _ => {
+                        let source_value  = get_op_value(source, source_type);
+                        let destination_value  = get_op_value(destination, destination_type);
+
+                        registry_no = source_value;
+                        value = destination_value;
+                    }
+                };
+
+                instructions.push(InstructionFormat::FormatMoveOp(_FormatMoveLayout {
+                    opcode: BitInt::<5>::new(0).unwrap(),
+                    h: h_value,
+                    l: l_value,
+                    source_type: BitInt::<3>::new(source_type.get().into()).unwrap(),
+                    destination_type: BitInt::<3>::new(destination_type.get().into()).unwrap(),
+                    registry_no: BitInt::<3>::new(registry_no.into()).unwrap(),
+                    value: BitInt::<16>::new(value.into()).unwrap()
                 }))
             } else {
                 let source = tokens.get(1).unwrap();
@@ -159,7 +233,7 @@ pub fn parse(tokens: Vec<&str>, instruction_set: &HashMap<&str, BitInt<5>>) -> R
                     },
                     _ => {
                         alert(format!("Destination operand isnt a register for\n{} {}, {}", instruction, source, destination).as_str());
-                        panic!("")
+                        panic!()
                     }
                 }
             }
@@ -174,7 +248,6 @@ pub fn parse(tokens: Vec<&str>, instruction_set: &HashMap<&str, BitInt<5>>) -> R
 fn get_op_value(source: &str, operand: Operand) -> u8 {
     match operand {
         Operand::Register(_) => {
-            // let re = &RE_MAP["REGISTER"].regex;
             let re: &Regex = RE_MAP.get("REGISTER").unwrap();
             
             if let Some(captures) = re.captures(source) {
@@ -347,6 +420,8 @@ fn parse_operand_type(operand: &str) -> Operand {
         Operand::ImmediateValueBIN(0b000)
     } else {
         alert("Unknown operand type");
-        panic!("")
+        panic!("Unknown operand type")
     }
 }
+
+

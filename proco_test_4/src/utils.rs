@@ -6,7 +6,11 @@ pub struct BitInt<const N: usize>(u16);
 
 impl<const N: usize> fmt::Display for BitInt<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let value = self.0 & ((1 << N) - 1);
+        let value = if N < 16 {
+            self.0 & ((1 << N) - 1)
+        } else {
+            self.0
+        };
 
         let binary_str = format!("{:0width$b}", value, width = N);
 
@@ -17,9 +21,11 @@ impl<const N: usize> fmt::Display for BitInt<N> {
 impl<const N: usize> BitInt<N> {
     pub fn new(value: u16) -> Option<Self> {
         if N > 16 {
-            panic!("Cannot have more than 16 bits for u16");
+            panic!("BitInt cannot represent more than 16 bits");
         }
-        if value < (1 << N) {
+        if N == 16 {
+            Some(BitInt::<N>(value))
+        } else if value < (1 << N) {
             Some(BitInt::<N>(value))
         } else {
             None

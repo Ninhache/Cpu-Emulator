@@ -72,7 +72,7 @@ fn main() -> std::io::Result<()> {
         let tokens: Vec<&str> = parser::tokenize(&line);
 
         // print!("{} -> ", tokens[0].to_string());
-        print!("{} -> ", tokens[0].to_string());
+        // print!("{} -> ", tokens[0].to_string());
 
         let instruction: Vec<parser::InstructionFormat> = parser::parse(tokens, &INSTRUCTION_SET).unwrap();
         
